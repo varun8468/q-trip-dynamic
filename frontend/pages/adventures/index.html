@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QTrip Adventures</title>
+    <link rel="stylesheet" href="../../css/styles.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+</head>
+
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light ps-3">
+        <a class="navbar-brand" href="../../">QTrip</a>
+        <div id="city-name"></div>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav d-flex justify-content-end w-100">
+                <li class="nav-item active">
+                    <a class="nav-link" href="../../">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="./reservations/">Reservations</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Content section -->
+    <div class="container">
+      <div class="content">
+        <!-- Page heading and description -->
+        <h1>Explore all adventures</h1>
+        <p style="font-size: 24px">
+          Here's a list of places that you can explore in city
+        </p>
+        <div class="mb-5">
+          <!-- Filters section -->
+          <div class="filter-bar d-flex align-items-center">
+            <div class="filter-bar-tile">
+              <label for="duration">Filters:</label>
+            </div>
+            <!-- Duration filter (select one) -->
+            <div class="filter-bar-tile d-flex align-items-center">
+              <select
+                class="form-control"
+                name="duration"
+                id="duration-select"
+                onchange="selectDuration(event)"
+              >
+                <option disabled selected value="">
+                  Filter by Duration (Hours)
+                </option>
+                <option value="0-2">0-2 Hours</option>
+                <option value="2-6">2-6 Hours</option>
+                <option value="6-12">6-12 Hours</option>
+                <option value="12-99">12+ Hours</option>
+              </select>
+              <div
+                class="ms-3"
+                style="color: #0645ad; cursor: pointer"
+                onclick="clearDuration(event)"
+              >
+                Clear
+              </div>
+            </div>
+            <!-- Category filter (select one or many) -->
+            <div class="filter-bar-tile d-flex align-items-center">
+              <select
+                class="form-control"
+                id="category-select"
+                onchange="selectCategory(event)"
+              >
+                <option disabled selected value="">Add Category</option>
+                <option value="Cycling">Cycling Routes</option>
+                <option value="Hillside">Hillside Getaways</option>
+                <option value="Beaches">Serene Beaches</option>
+                <option value="Party">Party Spots</option>
+              </select>
+              <div
+                class="ms-3"
+                style="color: #0645ad; cursor: pointer"
+                onclick="clearCategory(event)"
+              >
+                Clear
+              </div>
+            </div>
+          </div>
+          <!-- Section to display all selected categories  -->
+          <div class="mt-2" id="category-section">
+            <div class="d-flex align-items-center" id="category-list"></div>
+          </div>
+        </div>
+        <!-- Display Adventures cards -->
+        <div class="row" id="data"></div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <footer>
+      <div class="container">© QTrip 2022 Made with love by Varun</div>
+    </footer>
+
+    <!-- Bootstrap script -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+
+    <script type="module">
+      import {
+        getCityFromURL,
+        fetchAdventures,
+        addAdventureToDOM,
+        filterByDuration,
+        filterByCategory,
+        filterFunction,
+        saveFiltersToLocalStorage,
+        getFiltersFromLocalStorage,
+        generateFilterPillsAndUpdateDOM,
+      } from "../../modules/adventures_page.js";
+
+      // Declaring global variable adventure
+      let adventures;
+
+      //Checks if filters are available in local storage and sets the value accordingly
+      // The structure of "filters" object is { duration : "6-10", category : [] }, which basically means duration is single-value filter and category is multi-value filter
+
+      let filters =
+        getFiltersFromLocalStorage() !== null
+          ? getFiltersFromLocalStorage()
+          : { duration: "", category: [] };
+
+      //entry point (executed when DOM is loaded)
+      (async function () {
+        //Fetches the City from URL query param (here : window.location.search is an in-built browser property that returns the query param from URL, example: http://localhost:8081/?city=bengaluru => window.location.search would return "?city=bengaluru")
+        let city = await getCityFromURL(window.location.search);
+
+        //Fetches the adventures for the particular city
+        adventures = await fetchAdventures(city);
+
+        //Applies filters on the adventures list
+        let filteredAdventures = filterFunction(adventures, filters);
+
+        //Updates the filtered adventures list to the DOM
+        addAdventureToDOM(filteredAdventures);
+        addAdventureToDOM([
+          {
+            category: "park",
+            costPerHead: 20,
+            currency: "INR",
+            duration: 4,
+            image: "data:image/jpeg;base64,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",
+            name: "park",
+            id: "123456",
+          },
+        ]);
+
+        // Updates the DOM with filter pills if any
+        generateFilterPillsAndUpdateDOM(filters);
+      })();
+
+      //executed when onChange() is triggered on duration filter dropdown
+      function selectDuration(event) {
+        // TODO: MODULE_FILTERS
+        // 1. Change the DOM to show the selected duration filter. Use the provided input event
+        document.getElementById("data").textContent = "";
+        let duration = event.target.value;
+        filters['duration'] = duration;
+        let filteredAdventures = filterFunction(adventures, filters);
+        addAdventureToDOM(filteredAdventures);
+        // 2. Invoke saveFiltersToLocalStorage here
+        saveFiltersToLocalStorage(filters);
+      }
+
+      //executed when clear button is clicked on duration filter dropdown
+      function clearDuration(event) {
+        // TODO: MODULE_FILTERS
+        // 1. Change the DOM to clear the Duration filter. Refer clearCategory() below
+        document.getElementById("data").textContent = "";
+        // document.getElementById("duration-select").innerHTML = `<option disabled selected value="">
+        //           Filter by Duration (Hours)
+        //         </option>`;
+
+        filters["duration"] = "";
+        let filteredAdventures = filterFunction(adventures, filters);
+        addAdventureToDOM(filteredAdventures);
+        // 2. Invoke saveFiltersToLocalStorage here
+        saveFiltersToLocalStorage(filters);
+      }
+
+      //executed when onChange() is triggered on category filter dropdown
+      function selectCategory(event) {
+        document.getElementById("data").textContent = "";
+        document.getElementById("category-list").textContent = "";
+
+        let category = event.target.value;
+        document.getElementById("category-select").selectedIndex = 0;
+
+        filters["category"].push(category);
+        filters["category"] = filters["category"].filter(onlyUnique);
+
+        generateFilterPillsAndUpdateDOM(filters);
+        let filteredAdventures = filterFunction(adventures, filters);
+        addAdventureToDOM(filteredAdventures);
+
+        // TODO: MODULE_FILTERS
+        // 1. Invoke saveFiltersToLocalStorage here
+        saveFiltersToLocalStorage(filters);
+      }
+
+      //executed when clear button is clicked on category filter dropdown
+      function clearCategory(event) {
+        document.getElementById("data").textContent = "";
+        document.getElementById("category-list").textContent = "";
+
+        filters["category"] = [];
+        let filteredAdventures = filterFunction(adventures, filters);
+        addAdventureToDOM(filteredAdventures);
+
+        // TODO: MODULE_FILTERS
+        // 1. Invoke saveFiltersToLocalStorage here
+        saveFiltersToLocalStorage(filters);
+      }
+
+      //helper function
+      function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+      }
+
+      //registering module based functions in the DOM in order for them to work
+      window.selectDuration = selectDuration;
+      window.selectCategory = selectCategory;
+      window.clearDuration = clearDuration;
+      window.clearCategory = clearCategory;
+    </script>
+  </body>
+</html>
